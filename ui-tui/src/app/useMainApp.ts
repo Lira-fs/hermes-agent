@@ -106,7 +106,6 @@ export function useMainApp(gw: GatewayClient) {
   const [voiceProcessing, setVoiceProcessing] = useState(false)
   const [voiceRecordKey, setVoiceRecordKey] = useState<ParsedVoiceRecordKey>(DEFAULT_VOICE_RECORD_KEY)
   const [sessionStartedAt, setSessionStartedAt] = useState(() => Date.now())
-  const [turnStartedAt, setTurnStartedAt] = useState<null | number>(null)
   const [goodVibesTick, setGoodVibesTick] = useState(0)
   const [bellOnComplete, setBellOnComplete] = useState(false)
 
@@ -393,14 +392,6 @@ export function useMainApp(gw: GatewayClient) {
     sys
   })
 
-  useEffect(() => {
-    if (ui.busy) {
-      setTurnStartedAt(prev => prev ?? Date.now())
-    } else {
-      setTurnStartedAt(null)
-    }
-  }, [ui.busy])
-
   useConfigSync({ gw, setBellOnComplete, setVoiceEnabled, setVoiceRecordKey, sid: ui.sid })
 
   // Tab title: `⚠` waiting on approval/sudo/secret/clarify, `⏳` busy, `✓` idle.
@@ -526,7 +517,7 @@ export function useMainApp(gw: GatewayClient) {
     const next = composerActions.dequeue()
 
     if (next) {
-      patchUiState({ busy: true, status: 'running…' })
+      patchUiState({ busy: true, status: 'running…', turnStartedAt: Date.now() })
       sendQueued(next)
     }
   }, [ui.sid, ui.busy, composerActions, composerRefs, sendQueued])
@@ -603,7 +594,7 @@ export function useMainApp(gw: GatewayClient) {
 
     const exitHandler = () => {
       turnController.reset()
-      patchUiState({ busy: false, sid: null, status: 'gateway exited' })
+      patchUiState({ busy: false, sid: null, status: 'gateway exited', turnStartedAt: null })
       turnController.pushActivity('gateway exited · /logs to inspect', 'error')
       sys('error: gateway exited')
     }
@@ -818,7 +809,7 @@ export function useMainApp(gw: GatewayClient) {
       showStickyPrompt: !!stickyPrompt,
       statusColor: statusColorOf(ui.status, ui.theme.color),
       stickyPrompt,
-      turnStartedAt: ui.sid ? turnStartedAt : null,
+      turnStartedAt: ui.sid ? ui.turnStartedAt : null,
       // CLI parity: the classic prompt_toolkit status bar shows a red dot
       // on REC (cli.py:_get_voice_status_fragments line 2344).
       voiceLabel: voiceRecording ? '● REC' : voiceProcessing ? '◉ STT' : `voice ${voiceEnabled ? 'on' : 'off'}`
@@ -829,7 +820,6 @@ export function useMainApp(gw: GatewayClient) {
       goodVibesTick,
       sessionStartedAt,
       stickyPrompt,
-      turnStartedAt,
       ui,
       voiceEnabled,
       voiceProcessing,

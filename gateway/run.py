@@ -2604,8 +2604,8 @@ class GatewayRunner:
             )
         elif is_queue_mode:
             message = (
-                f"⏳ Queued for the next turn{status_detail}. "
-                f"I'll respond once the current task finishes."
+                f"⏳ Mensagem recebida{status_detail}. "
+                f"Respondo assim que terminar a tarefa atual."
             )
         else:
             message = (

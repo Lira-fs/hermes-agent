@@ -114,6 +114,7 @@ export interface UiState {
   statusBar: StatusBarMode
   streaming: boolean
   theme: Theme
+  turnStartedAt: null | number
   usage: Usage
 }
 

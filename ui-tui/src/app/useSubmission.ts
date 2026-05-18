@@ -103,20 +103,20 @@ export function useSubmission(opts: UseSubmissionOptions) {
           appendMessage({ role: 'user', text: displayText })
         }
 
-        patchUiState({ busy: true, status: 'running…' })
+        patchUiState({ busy: true, status: 'running…', turnStartedAt: Date.now() })
         turnController.bufRef = ''
         turnController.interrupted = false
 
         gw.request<PromptSubmitResponse>('prompt.submit', { session_id: sid, text: submitText }).catch((e: Error) => {
           if (isSessionBusyError(e)) {
             composerActions.enqueue(submitText)
-            patchUiState({ busy: true, status: 'queued for next turn' })
+            patchUiState(state => ({ ...state, busy: true, status: 'queued for next turn' }))
 
             return sys(`queued: "${submitText.slice(0, 50)}${submitText.length > 50 ? '…' : ''}"`)
           }
 
           sys(`error: ${e.message}`)
-          patchUiState({ busy: false, status: 'ready' })
+          patchUiState({ busy: false, status: 'ready', turnStartedAt: null })
         })
       }
 
@@ -151,7 +151,7 @@ export function useSubmission(opts: UseSubmissionOptions) {
   const shellExec = useCallback(
     (cmd: string) => {
       appendMessage({ role: 'user', text: `!${cmd}` })
-      patchUiState({ busy: true, status: 'running…' })
+      patchUiState({ busy: true, status: 'running…', turnStartedAt: Date.now() })
 
       gw.request<ShellExecResponse>('shell.exec', { command: cmd })
         .then(raw => {
@@ -172,7 +172,7 @@ export function useSubmission(opts: UseSubmissionOptions) {
           }
         })
         .catch((e: Error) => sys(`error: ${e.message}`))
-        .finally(() => patchUiState({ busy: false, status: 'ready' }))
+        .finally(() => patchUiState({ busy: false, status: 'ready', turnStartedAt: null }))
     },
     [appendMessage, gw, sys]
   )

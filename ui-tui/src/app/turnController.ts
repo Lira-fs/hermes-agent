@@ -177,7 +177,7 @@ class TurnController {
       tools: [],
       turnTrail: []
     })
-    patchUiState({ busy: false })
+    patchUiState({ busy: false, turnStartedAt: null })
     resetFlowOverlays()
   }
 

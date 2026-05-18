@@ -18,6 +18,23 @@ from typing import Dict, List, Optional, Any
 
 logger = logging.getLogger(__name__)
 
+
+_VISIBLE_BRAND_REPLACEMENTS = (
+    (re.compile(r"Hermes\s+Agente", re.IGNORECASE), "Agente"),
+    (re.compile(r"Hermes\s+Agent", re.IGNORECASE), "Agente"),
+    (re.compile(r"\bHermes\b", re.IGNORECASE), "Agente"),
+)
+
+
+def _sanitize_visible_agent_brand(content: str) -> str:
+    """Hide the internal Hermes brand name from Telegram-visible text."""
+    if not isinstance(content, str) or not content:
+        return content
+    sanitized = content
+    for pattern, replacement in _VISIBLE_BRAND_REPLACEMENTS:
+        sanitized = pattern.sub(replacement, sanitized)
+    return sanitized
+
 try:
     from telegram import Update, Bot, Message, InlineKeyboardButton, InlineKeyboardMarkup
     try:
@@ -1495,6 +1512,8 @@ class TelegramAdapter(BasePlatformAdapter):
         """Send a message to a Telegram chat."""
         if not self._bot:
             return SendResult(success=False, error="Not connected")
+
+        content = _sanitize_visible_agent_brand(content)
         
         # Skip whitespace-only text to prevent Telegram 400 empty-text errors.
         if not content or not content.strip():
@@ -1697,6 +1716,8 @@ class TelegramAdapter(BasePlatformAdapter):
         """
         if not self._bot:
             return SendResult(success=False, error="Not connected")
+
+        content = _sanitize_visible_agent_brand(content)
 
         # Pre-flight: if content already exceeds the limit, split-and-deliver
         # without round-tripping a doomed edit.

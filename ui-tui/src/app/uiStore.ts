@@ -25,6 +25,7 @@ const buildUiState = (): UiState => ({
   statusBar: 'top',
   streaming: true,
   theme: DEFAULT_THEME,
+  turnStartedAt: null,
   usage: ZERO
 })
 
